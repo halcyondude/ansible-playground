@@ -1,0 +1,81 @@
+---
+- hosts: localhost
+  gather_facts: no
+  become: yes
+  # become_user: root
+  
+  vars:
+    node_list:
+      - tiny0
+      - tiny2
+    xml_reducer_query: "results[*].{domain_name: item, domain_xml: get_xml}"
+   
+  tasks:
+    # - name: The value of node_list
+    #   debug: msg="(node_list) The node value is {{item}}"
+    #   with_items: "{{node_list}}"
+    
+    - debug: var=node_list
+
+    - name: get XML definitions for libvirt domains (iterate over node_list)
+      virt:
+        name: "{{ item }}"
+        command: get_xml
+      register: node_list_xml
+      with_items: "{{ node_list }}"
+
+    # - name: dump node_list as a whole (result of with_items block)
+    #   debug: var=node_list_xml
+
+    - name: simplify node_list_xml into list of dict(domain_name, domain_xml)
+      debug: msg={{ node_list_xml | json_query(xml_reducer_query) }}
+
+    - name: set fact for simplified result set
+      set_fact: simplified_xml_results={{ node_list_xml | json_query(xml_reducer_query) }}
+
+    - name: set facts (using dynamic keys) to access domain XML by VM name
+      set_fact: '{{ item.domain_name }}_domain_xml={{ item.domain_xml }}'
+      with_items: "{{ simplified_xml_results }}"    
+
+    - name: extract MAC addresses from domain XML 
+      xml:
+          xmlstring: "{{ item.domain_xml }}"
+          xpath: /domain/devices/interface/mac
+          content: attribute
+          attribute: address
+      register: mac_address_results
+      with_items: "{{ simplified_xml_results }}"  
+
+    - debug: var=mac_address_results
+      
+# - hosts: localhost
+#   roles:
+#     - f500.dumpall
+
+
+####################
+
+    # - name: get XML definition of tiny0 (hard coded)
+    #   virt:
+    #     name: tiny0
+    #     command: get_xml
+    #   register: tiny0_xml
+
+    # - debug: var=tiny0_xml
+
+    # - name: get info about tiny0
+    #   virt:
+    #     name: tiny0
+    #     command: info
+    #   register: tiny0_info
+    
+    # - debug: var=tiny0_info
+
+    # - name: get info about the hypervisor itself
+    #   virt:
+    #     command: nodeinfo
+    #   register: local_hypervisor_info
+
+    # - debug: var=local_hypervisor_info
+
+

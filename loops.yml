@@ -1,0 +1,74 @@
+---
+- hosts: localhost
+  gather_facts: no
+  # become: yes
+  # become_user: root
+  vars:
+    iter:
+      - key: abc
+        val: xyz
+      - key: efg
+        val: uvw
+    
+    simple_list:
+      - subnode-0
+      - subnode-1
+      - subnode-3
+    
+    # "list of structs"
+    nodes:
+      - name: subnode1
+        mac:  somemac-1
+        ip:   someip-1
+      - name: subnode2
+        mac:  somemac-2
+        ip:   someip-2
+      - name: subnode3
+        mac:  somemac-3
+        ip:   someip-3
+
+    simple_dict:
+      field1: one
+      field2: two
+      field3: three
+
+  tasks:
+    - name: Iterate over a simple list
+      debug: msg="(simple_list) The node value is {{item}}"
+      with_items: "{{simple_list}}"
+
+    - name: Iterate over a list of structs
+      debug: msg="(nodes) name={{ item.name }}, mac={{ item.mac }}, ip={{ item.ip }}"
+      with_items: "{{ nodes }}"
+
+    - name: Use list of structs to construct fact with dynamicly created fact names (mac addresses) syntax1
+      set_fact: {"{{item.name}}_mac_syntax1":"{{ item.mac }}"}
+      with_items: "{{nodes}}"
+
+    - name: Use list of structs to construct fact with dynamicly created fact names (mac addresses) syntax2 (CLEANER)
+      set_fact: '{{ item.name }}_mac_syntax2={{ item.mac }}'
+      with_items: "{{nodes}}"
+
+
+
+
+    # - name: Print dynamically constructed fact names (mac addresses)
+    #   debug: msg="key={{item.name}}, hostvar={{hostvars['localhost'][item.name_mac_address]}}"
+    #   with_items: "{{nodes}}"
+
+
+    - set_fact: {"{{ item.key }}":"{{ item.val }}"}
+      with_items: "{{iter}}"
+
+    - debug: msg="key={{item.key}}, hostvar={{hostvars['localhost'][item.key]}}"
+      with_items: "{{iter}}"
+
+    # creates a string of inline module parameter expression by concatenating value of 
+    # some_var (fact name), separator = and value of some_value (fact value).
+    # https://stackoverflow.com/questions/42907723/yaml-when-an-equals-sign-can-be-used-for-dictionaries/42908278#42908278
+    # - name: inline module parameter expression
+    #   set_fact: '{{ some_var }}={{ some_value }}'
+
+# - hosts: localhost
+#   roles:
+#     - f500.dumpall

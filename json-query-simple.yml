@@ -1,0 +1,18 @@
+# https://medium.com/@george.shuklin/data-manipulation-in-ansible-json-query-769fb34655d4
+
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+   - debug: var=item.name
+     with_items: '{{foo}}'
+  vars:
+    input:
+     - name: Good one
+       good: True
+     - name: Another good
+       good: True
+     - name: Bad one
+       good: False
+     - name: Some junk at the end
+    foo: '{{input|json_query("[?good==`true`]")}}'

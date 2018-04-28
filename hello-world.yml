@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  gather_facts: no
+  # become: yes
+  # become_user: root
+
+  tasks:
+    - name: set "hello world" into the variable 'howdy' 
+      shell: echo "hello world"
+      register: howdy
+
+    - name: dump variable with 'debug' task
+      debug:
+        var: howdy.stdout
+  
