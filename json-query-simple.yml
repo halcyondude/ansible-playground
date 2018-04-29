@@ -1,4 +1,5 @@
 # https://medium.com/@george.shuklin/data-manipulation-in-ansible-json-query-769fb34655d4
+#  http://jmespath.org/tutorial.html
 
 ---
 - hosts: localhost
